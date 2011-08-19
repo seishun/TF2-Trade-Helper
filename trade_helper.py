@@ -66,8 +66,17 @@ def check_pair(player_backpack, friend_backpack, filters, language):
 
 def get_friends_from_xml(xmldoc):
 	return [
-		friend.firstChild.nodeValue for friend in xmldoc.getElementsByTagName('friend')
+		int(friend.firstChild.nodeValue) for friend in xmldoc.getElementsByTagName('friend')
 	]
+
+def get_steamid64_from_xml(xmldoc):
+	try:
+		steamid64 = int( xmldoc.getElementsByTagName('steamID64')[0].firstChild.data )
+	except IndexError:
+		print "The specified profile %s could not be found." % friend_url
+		return 0
+	else:
+		return steamid64
 
 def get_potential_trades(
 	player_steamid64, friend_steamid64s = [], filters = [], language = 'en',
@@ -94,7 +103,7 @@ def get_potential_trades(
 		except KeyError:
 			# This should only happen when the backpack is private
 			if friend_names:
-				print "Unable to load %s's backpack!" % friend_names[friend_steamid64]
+				safe_print( "Unable to load %s's backpack!" % friend_names[friend_steamid64] )
 			# Tuple of two empty lists - neither of you have anything to give each other
 			yield (friend_steamid64, ([],[]))
 
@@ -103,7 +112,7 @@ def get_player_summaries(steamid64s, online_only = False):
 	summaries = loads(
 		urlopen(
 			'http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=%s&steamids=%s' % (
-				API_KEY, ','.join(steamid64s)
+				API_KEY, ','.join([str(id) for id in steamid64s])
 			)
 		).read()
 	)["response"]["players"]
@@ -122,6 +131,7 @@ if __name__ == "__main__":
 	parser.add_argument('--ignore-class', metavar='item_class', nargs='+', default=[], help='ignore items of the specified item class (such as "craft_item" or "tf_wearable")')
 	parser.add_argument('--language', default='en', help='the ISO639-1 language code for the language all localized strings should be returned in.')
 	parser.add_argument('--no-schema-cache', action='store_true', help='reload all schemas')
+	parser.add_argument('--friend-profile-urls', metavar='URL', nargs='+', default=[], help="Override player's friend list and use these profiles")
 	args = parser.parse_args()
 	
 	from pickle import load, dump
@@ -131,7 +141,7 @@ if __name__ == "__main__":
 				SCHEMAS = load(f)
 		except:
 			pass
-	
+
 	from sys import exit
 	API_KEY = args.key
 	profile_url = args.profile_url
@@ -140,14 +150,27 @@ if __name__ == "__main__":
 		xmldoc = parse( urlopen( profile_url + "/friends?xml=1" ) )
 	except IOError:
 		exit("Invalid URL specified.")
-	try:
-		steamid64 = int( xmldoc.getElementsByTagName('steamID64')[0].firstChild.data )
-		name = xmldoc.getElementsByTagName('steamID')[0].firstChild.data
-	except IndexError:
+	player_steamid64 = get_steamid64_from_xml(xmldoc)
+	if not player_steamid64:
 		exit("The specified profile could not be found.")
+	player_name = xmldoc.getElementsByTagName('steamID')[0].firstChild.data
+	if args.friend_profile_urls:
+		friend_steamids = []
+		for friend_url in args.friend_profile_urls:
+			try:
+				xmldoc = parse( urlopen( friend_url + "/friends?xml=1" ) )
+			except IOError:
+				print "%s is an invalid URL." % friend_url
+			friend_steamid64 = get_steamid64_from_xml(xmldoc)
+			if friend_steamid64:
+				friend_steamids.append(friend_steamid64)
+	else:
+		friend_steamids = get_friends_from_xml(xmldoc)
+	if len(friend_steamids) < 1:
+		exit("No friends found")
 	try:
 		friend_summaries = get_player_summaries(
-			get_friends_from_xml(xmldoc),
+			friend_steamids,
 			args.online_only
 		)
 	except IOError as (errstr, errcode, errmsg, headers):
@@ -158,11 +181,11 @@ if __name__ == "__main__":
 	
 	friend_names = { friend["steamid"]:friend["personaname"] for friend in friend_summaries }
 	for friend_steamid64, (trade_to, trade_from) in get_potential_trades(
-		steamid64,
+		player_steamid64,
 		[ friend["steamid"] for friend in friend_summaries ],
 		args.ignore_class,
 		args.language,
-		name,
+		player_name,
 		friend_names
 	):
 		print_trade(
