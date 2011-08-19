@@ -3,10 +3,15 @@ A simple tool to help you find people to trade with. Launch with '-h' to get hel
 If you don't have an API key, get one here: http://steamcommunity.com//dev/apikey
 
 Some useful item classes to filter out:
-tf_wearable								hats, badges etc
-tool									paint, tags etc
-craft_item, class_token, slot_token		pretty obvious
-supply_crate							ditto
+
+tf_wearable
+	hats, badges etc
+tool
+	paint, tags etc
+craft_item, class_token, slot_token
+	pretty obvious
+supply_crate
+	ditto
 
 
 Feel free to use this code to write a GUI/WebUI. You'll probably want to use the following functions:

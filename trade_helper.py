@@ -127,12 +127,10 @@ if __name__ == "__main__":
 	from pickle import load, dump
 	if not args.no_schema_cache:
 		try:
-			f = open('tf2-schema-cache')
-			__SCHEMAS = load(f)
+			with open('tf2-schema-cache') as f:
+				SCHEMAS = load(f)
 		except:
 			pass
-		else:
-			f.close()
 	
 	from sys import exit
 	API_KEY = args.key
@@ -172,5 +170,5 @@ if __name__ == "__main__":
 		)
 	
 	f = open('tf2-schema-cache', 'w')
-	dump(__SCHEMAS, f)
+	dump(SCHEMAS, f)
 	f.close()
