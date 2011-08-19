@@ -131,7 +131,7 @@ if __name__ == "__main__":
 	parser.add_argument('--ignore-class', metavar='item_class', nargs='+', default=[], help='ignore items of the specified item class (such as "craft_item" or "tf_wearable")')
 	parser.add_argument('--language', default='en', help='the ISO639-1 language code for the language all localized strings should be returned in.')
 	parser.add_argument('--no-schema-cache', action='store_true', help='reload all schemas')
-	parser.add_argument('--friend-profile-urls', metavar='URL', nargs='+', default=[], help="Override player's friend list and use these profiles")
+	parser.add_argument('--profile-urls', metavar='URL', nargs='+', default=[], help="Override player's friend list and use the specified profiles")
 	args = parser.parse_args()
 	
 	from pickle import load, dump
@@ -154,13 +154,14 @@ if __name__ == "__main__":
 	if not player_steamid64:
 		exit("The specified profile could not be found.")
 	player_name = xmldoc.getElementsByTagName('steamID')[0].firstChild.data
-	if args.friend_profile_urls:
+	if args.profile_urls:
 		friend_steamids = []
-		for friend_url in args.friend_profile_urls:
+		for url in args.profile_urls:
+			print 'Resolving "%s"...' % url
 			try:
-				xmldoc = parse( urlopen( friend_url + "/friends?xml=1" ) )
+				xmldoc = parse( urlopen( url + "/friends?xml=1" ) )
 			except IOError:
-				print "%s is an invalid URL." % friend_url
+				print "%s is an invalid URL." % url
 			friend_steamid64 = get_steamid64_from_xml(xmldoc)
 			if friend_steamid64:
 				friend_steamids.append(friend_steamid64)
