@@ -1,0 +1,67 @@
+A simple tool to help you find people to trade with. Launch with '-h' to get help.
+
+If you don't have an API key, get one here: http://steamcommunity.com//dev/apikey
+
+Some useful item classes to filter out:
+tf_wearable								hats, badges etc
+tool									paint, tags etc
+craft_item, class_token, slot_token		pretty obvious
+supply_crate							ditto
+
+
+Feel free to use this code to write a GUI/WebUI. You'll probably want to use the following functions:
+
+
+get_potential_trades(
+	player_steamid64, friend_steamid64s = [], filters = [], language = 'en',
+	player_name = '', friend_names = defaultdict(str)
+)
+
+Iterates through player's friends and yields potential trades for each their Steam friends.
+
+Arguments:
+
+player_steamid64
+	Player's 64-bit SteamID
+friend_steamid64s
+	Will override the friend list that would be loaded automatically.
+	Useful if you only want to look at online friends, for example.
+filters
+	Item classes to filter out
+language
+	If not provided, will load English schema if it's not loaded yet.
+	Specify a different language if you only want a localized schema.
+	language = '' will load untranslated string tokens.
+player_name
+	Provide if you want console output when player's backpack is loaded.
+friend_names
+	Dictionary structured as { steamid64 : name }
+	Provide if you want console output whenever a friend's backpack is loaded.
+
+Return value:
+	Yields a nested tuple of type ( friend_steamid64, ( [ items player can give the friend ] , [ items friend can give the player ] ) )
+
+
+	
+get_player_summaries(steamid64s, online_only = False)
+
+Wrapper around GetPlayerSummaries from Steam WebAPI.
+
+Arguments:
+
+steamid64s
+	List of 64-bit SteamIDs
+online_only
+	Will filter out offline players
+
+Return value:
+	A list of dictionaries as described here http://developer.valvesoftware.com/wiki/Steam_Web_API#GetPlayerSummaries_.28v0002.29
+
+
+query_schema(language = 'en')
+	Returns a schema in the given language as a dictionary.
+	The data returned is described here http://wiki.teamfortress.com/wiki/WebAPI/GetSchema#Result_Data
+	Will load and store the schema if it's not loaded yet.
+	Avoid accessing SCHEMAS directly, except to back up or restore all schemas at once.
+
+Don't forget to set the global variable API_KEY to your API key.
