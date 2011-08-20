@@ -1,4 +1,4 @@
-A simple tool to help you find people to trade with. Launch with '-h' to get help.
+A simple tool for Python 2.7 to help you find people to trade with. Launch with '-h' to get help.
 
 If you don't have an API key, get one here: http://steamcommunity.com//dev/apikey
 
